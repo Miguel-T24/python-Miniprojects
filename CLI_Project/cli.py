@@ -1,0 +1,71 @@
+import click
+import data_manager  
+
+@click.group()
+def cli():
+    pass
+
+@cli.command()
+@click.option('--name', required=True, help='Name of the user')
+@click.option('--lastname',required=True,help='Lastname of the user')
+@click.pass_context
+def new(ctx,name,lastname):
+    if not name or not lastname:
+        ctx.fail('the name and lastname are required')
+    else:
+        data = data_manager.read_json()
+        new_id = len(data)+1
+        new_user = {
+            'id':new_id,
+            'name' : name,
+            'lastname':lastname 
+        }
+        data.append(new_user)
+        data_manager.write_json(data)
+        print(f"User {name} {lastname} crated successfuly with id {new_id}")
+
+@cli.command()
+def users():
+    data = data_manager.read_json()
+    for user in data :
+        print(f"{user['id']} - {user['name']} - {user['lastname']}")
+
+@cli.command()
+@click.argument('id',type=int)
+def user(id):
+    data=data_manager.read_json()
+    user = next((x for x in data if x['id']==id), None)
+    if user is None:
+        print(f"User with id {id} not found" )
+    else:
+        print(f"{user['id']} - {user['name']} - {user['lastname']}")
+
+@cli.command()
+@click.argument('id',type=int)
+@click.option('--name', help="name of the user")
+@click.option('--lastname', help="lastname of the user")
+def update(id, name, lastname):
+    data = data_manager.read_json()
+    for user in data:
+        if user['id'] == id:
+            if name is not None:
+                user['name'] = name
+            if lastname is not None:
+                user['lastname'] = lastname
+            break
+    data_manager.write_json(data)
+    print(f"User with id {id} updated successfully")
+
+@cli.command()
+@click.argument('id',type=int)
+def delete(id):
+    data=data_manager.read_json()
+    user = next((x for x in data if x['id']==id), None)
+    if user is None:
+        print(f"User with id {id} not found" )
+    else:
+        data.remove(user)
+        data_manager.write_json(data)
+
+if __name__ == '__main__':
+    cli()
